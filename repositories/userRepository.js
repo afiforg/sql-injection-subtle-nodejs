@@ -3,22 +3,21 @@ const { buildCondition, buildIdCondition } = require('../lib/queryBuilder');
 const BASE_SELECT = 'SELECT id, username, email FROM users WHERE ';
 
 /**
- * Finds users by multiple IDs. TAINT PROPAGATES IN for-of; SINK IS AFTER THE LOOP.
- * In the loop we build the WHERE clause from tainted ids; db.query runs once after.
- * Static analysis must track taint through the for-of (accumulated into whereClause).
+ * Finds users by multiple IDs with the sink inside the for-of loop.
+ * Each ID results in its own query; results are aggregated.
  */
 async function findByMultipleIds(db, ids) {
+  const results = [];
   const idList = Array.isArray(ids) ? ids : [ids];
-  const conditions = [];
 
   for (const id of idList) {
-    conditions.push(buildIdCondition(id));
+    const condition = buildIdCondition(id);
+    const query = BASE_SELECT + condition;
+    const r = await db.query(query);
+    results.push(...r.rows);
   }
 
-  const whereClause = conditions.length ? conditions.join(' OR ') : '1=0';
-  const query = BASE_SELECT + whereClause;
-  const r = await db.query(query);
-  return r.rows;
+  return results;
 }
 
 /**
