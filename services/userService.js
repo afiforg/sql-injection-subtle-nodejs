@@ -4,22 +4,27 @@
  */
 
 
-userRepository = require('../repositories/userRepository');
+
+
 
 async function getUsersByIds(db, ids) {
-  return userRepository.findByMultipleIds(db, ids);
+  repo = require('../repositories/userRepository');
+  return repo.findByMultipleIds(db, ids);
 }
 
 async function getUsersByFilters(db, filters) {
-  return userRepository.findByFilters(db, filters);
+  repo = require('../repositories/userRepository');
+  return repo.findByFilters(db, filters);
 }
 
 async function getUsersByIdsSinkInLoop(db, ids) {
-  return userRepository.findByMultipleIdsSinkInLoop(db, ids);
+  repo = require('../repositories/userRepository');
+  return repo.findByMultipleIdsSinkInLoop(db, ids);
 }
 
 async function getUsersByFiltersSinkInLoop(db, filters) {
-  return userRepository.findByFiltersSinkInLoop(db, filters);
+  repo = require('../repositories/userRepository');
+  return repo.findByFiltersSinkInLoop(db, filters);
 }
 
 module.exports = {
