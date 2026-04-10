@@ -3,21 +3,29 @@ const { buildCondition, buildIdCondition } = require('../lib/queryBuilder');
 const BASE_SELECT = 'SELECT id, username, email FROM users WHERE ';
 
 /**
- * Finds users by multiple IDs with the sink inside the for-of loop.
- * Each ID results in its own query; results are aggregated.
+ * Helper that takes an accumulated array of ID conditions and runs a single sink (db.query).
+ * Taint flows into the conditions array, which is then passed to this sink helper.
+ */
+async function queryByIdConditions(db, conditions) {
+  const whereClause = conditions.length ? conditions.join(' OR ') : '1=0';
+  const query = BASE_SELECT + whereClause;
+  return db.query(query);
+}
+
+/**
+ * Finds users by multiple IDs. Taint is accumulated into an array of conditions,
+ * then passed once to a single sink helper that performs db.query.
  */
 async function findByMultipleIds(db, ids) {
-  const results = [];
   const idList = Array.isArray(ids) ? ids : [ids];
+  const conditions = [];
 
   for (const id of idList) {
-    const condition = buildIdCondition(id);
-    const query = BASE_SELECT + condition;
-    const r = await db.query(query);
-    results.push(...r.rows);
+    conditions.push(buildIdCondition(id));
   }
 
-  return results;
+  const r = await queryByIdConditions(db, conditions);
+  return r.rows;
 }
 
 /**
